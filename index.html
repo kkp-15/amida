@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>あみだくじ</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>あみだくじ</h1>
+    <canvas id="amidakujiCanvas" width="300" height="400"></canvas>
+    <br>
+    <button onclick="startAmidakuji()">スタート</button>
+    <p id="result"></p>
+    <audio id="startSound" src="start.mp3"></audio>
+    <audio id="resultSound" src="result.mp3"></audio>
+
+    <script>
+        const results = ["大吉", "中吉", "小吉", "末吉", "凶"];
+        const canvas = document.getElementById("amidakujiCanvas");
+        const ctx = canvas.getContext("2d");
+        const startSound = document.getElementById("startSound");
+        const resultSound = document.getElementById("resultSound");
+
+        function drawAmidakuji() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 2;
+            const cols = results.length;
+            const stepX = canvas.width / cols;
+            const stepY = canvas.height / 10;
+
+            for (let i = 0; i < cols; i++) {
+                ctx.beginPath();
+                ctx.moveTo(stepX * (i + 0.5), 0);
+                ctx.lineTo(stepX * (i + 0.5), canvas.height);
+                ctx.stroke();
+            }
+        }
+
+        function startAmidakuji() {
+            startSound.play();
+            let selected = Math.floor(Math.random() * results.length);
+            animateResult(selected);
+        }
+
+        function animateResult(selected) {
+            let y = 0;
+            const x = (selected + 0.5) * (canvas.width / results.length);
+            const interval = setInterval(() => {
+                if (y >= canvas.height) {
+                    clearInterval(interval);
+                    document.getElementById("result").innerText = "結果: " + results[selected];
+                    resultSound.play();
+                } else {
+                    ctx.fillStyle = "red";
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    y += 10;
+                }
+            }, 50);
+        }
+
+        drawAmidakuji();
+    </script>
+</body>
+</html>
