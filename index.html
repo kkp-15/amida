@@ -11,6 +11,7 @@
         }
         canvas {
             border: 1px solid black;
+            cursor: pointer;
         }
         button {
             margin-top: 10px;
@@ -23,7 +24,7 @@
     <h1>あみだくじ</h1>
     <canvas id="amidakujiCanvas" width="300" height="400"></canvas>
     <br>
-    <button onclick="startAmidakuji()">スタート</button>
+    <button onclick="resetAmidakuji()">リセット</button>
     <p id="result"></p>
     <audio id="startSound" src="start.mp3"></audio>
     <audio id="resultSound" src="result.mp3"></audio>
@@ -34,14 +35,17 @@
         const ctx = canvas.getContext("2d");
         const startSound = document.getElementById("startSound");
         const resultSound = document.getElementById("resultSound");
+        const cols = results.length;
+        const stepX = canvas.width / cols;
+        const stepY = canvas.height / 10;
+        let horizontalLines = [];
+        let selectedColumn = null;
 
         function drawAmidakuji() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = "black";
             ctx.lineWidth = 2;
-            const cols = results.length;
-            const stepX = canvas.width / cols;
-            const stepY = canvas.height / 10;
+            horizontalLines = [];
 
             for (let i = 0; i < cols; i++) {
                 ctx.beginPath();
@@ -49,17 +53,27 @@
                 ctx.lineTo(stepX * (i + 0.5), canvas.height);
                 ctx.stroke();
             }
+
+            for (let i = 0; i < canvas.height / stepY; i++) {
+                let col = Math.floor(Math.random() * (cols - 1));
+                let y = (i + 1) * stepY;
+                horizontalLines.push({ x: col, y: y });
+                ctx.beginPath();
+                ctx.moveTo(stepX * (col + 0.5), y);
+                ctx.lineTo(stepX * (col + 1.5), y);
+                ctx.stroke();
+            }
         }
 
-        function startAmidakuji() {
+        function startAmidakuji(selected) {
+            if (selectedColumn === null) return;
             startSound.play();
-            let selected = Math.floor(Math.random() * results.length);
-            animateResult(selected);
+            animateResult(selectedColumn);
         }
 
         function animateResult(selected) {
             let y = 0;
-            const x = (selected + 0.5) * (canvas.width / results.length);
+            const x = (selected + 0.5) * stepX;
             const interval = setInterval(() => {
                 if (y >= canvas.height) {
                     clearInterval(interval);
@@ -74,6 +88,19 @@
                 }
             }, 50);
         }
+
+        function resetAmidakuji() {
+            document.getElementById("result").innerText = "";
+            selectedColumn = null;
+            drawAmidakuji();
+        }
+
+        canvas.addEventListener("click", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            selectedColumn = Math.floor(clickX / stepX);
+            startAmidakuji(selectedColumn);
+        });
 
         drawAmidakuji();
     </script>
