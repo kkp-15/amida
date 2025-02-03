@@ -79,6 +79,8 @@
             let x = (selected + 0.5) * stepX;
             let y = 0;
             const interval = setInterval(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawAmidakuji();
                 ctx.fillStyle = "red";
                 ctx.beginPath();
                 ctx.arc(x, y, 5, 0, Math.PI * 2);
@@ -105,7 +107,7 @@
 
                 if (y >= canvas.height) {
                     clearInterval(interval);
-                    document.getElementById("result").innerText = "結果: " + results[selected];
+                    document.getElementById("result").innerText = "結果: " + results[Math.floor(x / stepX)];
                     resultSound.play();
                     isAnimating = false;
                     resetButton.disabled = false;
