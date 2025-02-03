@@ -24,7 +24,7 @@
     <h1>あみだくじ</h1>
     <canvas id="amidakujiCanvas" width="300" height="400"></canvas>
     <br>
-    <button onclick="resetAmidakuji()">リセット</button>
+    <button id="resetButton" onclick="resetAmidakuji()" disabled>リセット</button>
     <p id="result"></p>
     <audio id="startSound" src="start.mp3"></audio>
     <audio id="resultSound" src="result.mp3"></audio>
@@ -35,11 +35,13 @@
         const ctx = canvas.getContext("2d");
         const startSound = document.getElementById("startSound");
         const resultSound = document.getElementById("resultSound");
+        const resetButton = document.getElementById("resetButton");
         const cols = results.length;
         const stepX = canvas.width / cols;
         const stepY = canvas.height / 10;
         let horizontalLines = [];
         let selectedColumn = null;
+        let isAnimating = false;
 
         function drawAmidakuji() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -65,41 +67,65 @@
             }
         }
 
-        function startAmidakuji(selected) {
-            if (selectedColumn === null) return;
+        function startAmidakuji() {
+            if (selectedColumn === null || isAnimating) return;
+            isAnimating = true;
+            resetButton.disabled = true;
             startSound.play();
             animateResult(selectedColumn);
         }
 
         function animateResult(selected) {
+            let x = (selected + 0.5) * stepX;
             let y = 0;
-            const x = (selected + 0.5) * stepX;
             const interval = setInterval(() => {
+                ctx.fillStyle = "red";
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                let moved = false;
+                for (let line of horizontalLines) {
+                    if (Math.abs(y - line.y) < 5) {
+                        if (line.x === Math.floor(x / stepX)) {
+                            x = (line.x + 1.5) * stepX;
+                            moved = true;
+                            break;
+                        } else if (line.x + 1 === Math.floor(x / stepX)) {
+                            x = (line.x + 0.5) * stepX;
+                            moved = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!moved) {
+                    y += 10;
+                }
+
                 if (y >= canvas.height) {
                     clearInterval(interval);
                     document.getElementById("result").innerText = "結果: " + results[selected];
                     resultSound.play();
-                } else {
-                    ctx.fillStyle = "red";
-                    ctx.beginPath();
-                    ctx.arc(x, y, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                    y += 10;
+                    isAnimating = false;
+                    resetButton.disabled = false;
                 }
             }, 50);
         }
 
         function resetAmidakuji() {
+            if (isAnimating) return;
             document.getElementById("result").innerText = "";
             selectedColumn = null;
             drawAmidakuji();
         }
 
         canvas.addEventListener("click", (event) => {
+            if (isAnimating) return;
             const rect = canvas.getBoundingClientRect();
             const clickX = event.clientX - rect.left;
             selectedColumn = Math.floor(clickX / stepX);
-            startAmidakuji(selectedColumn);
+            startAmidakuji();
         });
 
         drawAmidakuji();
